@@ -15,6 +15,8 @@ router.get('/login', async (req, res) => {
 
   const userAgent = req.headers['user-agent'];
   const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  const location = ip.isV4Format(ipAddress) ? geoip.lookup(ipAddress) : null;
+            const locationStr = location ? `${location.city}, ${location.region}, ${location.country}` : 'Unknown Location';
 
   const deviceInfo = extractDeviceInfo(userAgent);
 
@@ -24,7 +26,7 @@ router.get('/login', async (req, res) => {
       operatingSystem: deviceInfo.operatingSystem,
       browser: deviceInfo.browser,
       ip: ipAddress,
-      location: await getLocation(ipAddress)
+      location: locationStr
     };
 
     console.log(loginDetails);
@@ -47,18 +49,18 @@ function extractDeviceInfo(userAgent) {
   };
 }
 
-function getLocation(ipAddress) {
-  return new Promise((resolve, reject) => {
-    ipinfo(ipAddress, (error, data) => {
-      if (error) {
-        reject(error);
-      } else {
-        const location = data ? `${data.city}, ${data.region}, ${data.country}` : 'Unknown Location';
-        resolve(location);
-      }
-    });
-  });
-}
+// function getLocation(ipAddress) {
+//   return new Promise((resolve, reject) => {
+//     ipinfo(ipAddress, (error, data) => {
+//       if (error) {
+//         reject(error);
+//       } else {
+//         const location = data ? `${data.city}, ${data.region}, ${data.country}` : 'Unknown Location';
+//         resolve(location);
+//       }
+//     });
+//   });
+// }
 
 
 
