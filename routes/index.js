@@ -31,7 +31,7 @@ router.get('/login', async (req, res) => {
 
  
 
-    res.send('Login details sent via email.');
+    res.json({loginDetails});
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
