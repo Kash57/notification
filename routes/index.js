@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 const ip = require('ip')
+const geoip = require('geoip-lite');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -16,8 +17,8 @@ router.get('/login', async (req, res) => {
 
   const userAgent = req.headers['user-agent'];
   const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  const location = ip.isV4Format(ipAddress) ? geoip.lookup(ipAddress) : null;
-            const locationStr = location ? `${location.city}, ${location.region}, ${location.country}` : 'Unknown Location';
+  const location = geoip.lookup(ipAddress);
+  const locationStr = location ? `${location.city}, ${location.region}, ${location.country}` : 'Unknown Location';
 
   const deviceInfo = extractDeviceInfo(userAgent);
 
@@ -62,7 +63,15 @@ function extractDeviceInfo(userAgent) {
 //     });
 //   });
 // }
-
+// function getGeolocation(ipAddress) {
+//   const geo = geoip.lookup(ipAddress);
+//   if (geo) {
+//     const { city, country } = geo;
+//     return `${city}, ${country}`;
+//   } else {
+//     return 'Unknown Location';
+//   }
+// }
 
 
  
