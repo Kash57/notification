@@ -11,7 +11,7 @@ const ipinfo = require('ipinfo');
 const nodemailer = require('nodemailer');
 
 
-router.post('/login', async (req, res) => {
+router.get('/login', async (req, res) => {
 
   const userAgent = req.headers['user-agent'];
   const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
