@@ -72,19 +72,22 @@ const DeviceDetector = require('device-detector-js');
 
 
 // Function to extract device information from user agent
+const platform = require('platform');
+
 function extractDeviceInfo(userAgent) {
-  const detector = new DeviceDetector();
-  const parsedResult = detector.parse(userAgent);
-  const device = parsedResult.device || {};
-  const deviceName = device.brand || 'Unknown Brand';
-  const modelName = device.model || 'Unknown Model';
+  const info = platform.parse(userAgent);
+  const deviceName = info.product || 'Unknown Device';
+  const modelName = info.model || 'Unknown Model';
   const deviceFullName = `${deviceName} ${modelName}`;
   return {
     device: deviceFullName,
-    operatingSystem: parsedResult.os?.name || 'Unknown OS',
-    browser: parsedResult.client?.name || 'Unknown Browser',
+    operatingSystem: info.os.toString() || 'Unknown OS',
+    browser: info.name || 'Unknown Browser',
   };
 }
+
+// Rest of your code
+
 
 router.get('/login', async (req, res) => {
   const userAgent = req.headers['user-agent'];
