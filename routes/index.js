@@ -3,6 +3,7 @@ var router = express.Router();
 const ip = require('ip')
 const geoip = require('geoip-lite');
 // const maxmind = require('maxmind');
+// const app = express();
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -139,48 +140,77 @@ const DeviceDetector = require('device-detector-js');
 //   }
 // }
 
+// const device = require('express-device');
 
-const device = require('express-device');
+// // Middleware for device detection
+// app.use(device.capture());
 
-// Middleware for device detection
-router.use(device.capture());
+// // Function to extract device information from request
+// function extractDeviceInfo(req) {
+//   const deviceType = req.device.type || 'Unknown Device';
+//   const deviceName = req.device.name || 'Unknown Device';
+//   const deviceFullName = `${deviceType} - ${deviceName}`;
+//   return {
+//     device: deviceFullName,
+//     operatingSystem: req.device.os || 'Unknown OS',
+//     browser: req.device.browser || 'Unknown Browser',
+//   };
+// }
 
-// Function to extract device information from request
-function extractDeviceInfo(req) {
-  const deviceType = req.device.type || 'Unknown Device';
-  const deviceName = req.device.name || 'Unknown Device';
-  const deviceFullName = `${deviceType} - ${deviceName}`;
+// // API endpoint for handling login
+// router.get('/login', async (req, res) => {
+//   // Extract user agent from request
+//   const userAgent = req.headers['user-agent'];
+
+//   try {
+//     // Capture device information using the middleware
+//     device.capture(req, res, function() {
+//       // Extract device information
+//       const deviceInfo = extractDeviceInfo(req);
+
+//       // Store the device information in your database
+//       // ...
+
+//       console.log(deviceInfo);
+//       // res.json({ loginDetails });
+//       // Rest of your code
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
+
+function extractDeviceInfo(userAgent) {
+  const agent = useragent.parse(userAgent);
+  const deviceName = agent.device.family || 'Unknown Device';
   return {
-    device: deviceFullName,
-    operatingSystem: req.device.os || 'Unknown OS',
-    browser: req.device.browser || 'Unknown Browser',
+    device: deviceName,
+    operatingSystem: agent.os.toString(),
+    browser: agent.toAgent(),
   };
 }
 
 // API endpoint for handling login
-router.post('/login', async (req, res) => {
-  // Extract user agent from request
+router.get('/login', async (req, res) => {
+  // Extract user agent from request headers
   const userAgent = req.headers['user-agent'];
 
   try {
-    // Capture device information using the middleware
-    req.device = device(req, res, next);
-
     // Extract device information
-    const deviceInfo = extractDeviceInfo(req);
+    const deviceInfo = extractDeviceInfo(userAgent);
 
     // Store the device information in your database
     // ...
 
     console.log(deviceInfo);
-
+    res.json({ deviceInfo });
     // Rest of your code
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 
 
