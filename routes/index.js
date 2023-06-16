@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 const ip = require('ip')
 const geoip = require('geoip-lite');
+// const maxmind = require('maxmind');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -11,27 +12,27 @@ router.get('/', function(req, res, next) {
 const useragent = require('useragent');
 const ipinfo = require('ipinfo');
 const nodemailer = require('nodemailer');
-
+// const geoLite2CityDb = maxmind.openSync('/path/to/GeoLite2-City.mmdb');
 
 router.get('/login', async (req, res) => {
 
   const userAgent = req.headers['user-agent'];
-  const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  const location = geoip.lookup(ipAddress);
-  const locationStr = location ? `${location.city}, ${location.region}, ${location.country}` : 'Unknown Location';
+            const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-  const deviceInfo = extractDeviceInfo(userAgent);
+            const deviceInfo = extractDeviceInfo(userAgent);
+            try {
+            const loginDetails = {
+              device: deviceInfo.device,
+              operatingSystem: deviceInfo.operatingSystem,
+              browser: deviceInfo.browser,
+              ip: ipAddress
+            };
 
-  try {
-    const loginDetails = {
-      device: deviceInfo.device,
-      operatingSystem: deviceInfo.operatingSystem,
-      browser: deviceInfo.browser,
-      ip: ipAddress,
-      location: locationStr
-    };
+            // Store the device information in your database
+            // ...
 
-    console.log(loginDetails);
+            console.log(loginDetails);
+
 
  
 
@@ -42,13 +43,33 @@ router.get('/login', async (req, res) => {
   }
 });
 
+// function extractDeviceInfo(userAgent) {
+//   const agent = useragent.parse(userAgent);
+//   return {
+//     device: agent.device.toString(),
+//     operatingSystem: agent.os.toString(),
+//     browser: agent.toAgent()
+//   };
+// }
+
+// Function to extract device information from user agent
 function extractDeviceInfo(userAgent) {
-  const agent = useragent.parse(userAgent);
-  return {
-    device: agent.device.toString(),
-    operatingSystem: agent.os.toString(),
-    browser: agent.toAgent()
-  };
+  try {
+    const agent = useragent.parse(userAgent);
+    const deviceName = agent.device.family || 'Unknown Device';
+    return {
+      device: deviceName,
+      operatingSystem: agent.os.toString(),
+      browser: agent.toAgent(),
+    };
+  } catch (error) {
+    console.error('Error extracting device info:', error);
+    return {
+      device: 'Unknown Device',
+      operatingSystem: 'Unknown OS',
+      browser: 'Unknown Browser',
+    };
+  }
 }
 
 // function getLocation(ipAddress) {
@@ -72,6 +93,16 @@ function extractDeviceInfo(userAgent) {
 //     return 'Unknown Location';
 //   }
 // }
+
+
+
+
+
+
+
+
+
+
 
 
  
