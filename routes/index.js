@@ -53,24 +53,19 @@ router.get('/login', async (req, res) => {
 // }
 
 // Function to extract device information from user agent
+const UAParser = require('ua-parser-js');
+
 function extractDeviceInfo(userAgent) {
-  try {
-    const agent = useragent.parse(userAgent);
-    const deviceName = agent.device.family || 'Unknown Device';
-    return {
-      device: deviceName,
-      operatingSystem: agent.os.toString(),
-      browser: agent.toAgent(),
-    };
-  } catch (error) {
-    console.error('Error extracting device info:', error);
-    return {
-      device: 'Unknown Device',
-      operatingSystem: 'Unknown OS',
-      browser: 'Unknown Browser',
-    };
-  }
+  const parser = new UAParser(userAgent);
+  const device = parser.getDevice();
+  const deviceName = device.model || device.type || 'Unknown Device';
+  return {
+    device: deviceName,
+    operatingSystem: parser.getOS().name || 'Unknown OS',
+    browser: parser.getBrowser().name || 'Unknown Browser',
+  };
 }
+
 
 // function getLocation(ipAddress) {
 //   return new Promise((resolve, reject) => {
