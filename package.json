@@ -10,6 +10,7 @@
     "debug": "~2.6.9",
     "device-detector-js": "^3.0.3",
     "express": "~4.16.1",
+    "express-device": "^0.4.2",
     "geoip-lite": "^1.4.7",
     "http-errors": "~1.6.3",
     "ip": "^1.1.8",

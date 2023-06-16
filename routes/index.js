@@ -72,48 +72,48 @@ const DeviceDetector = require('device-detector-js');
 
 
 // Function to extract device information from user agent
-const platform = require('platform');
+// const platform = require('platform');
 
-function extractDeviceInfo(userAgent) {
-  const info = platform.parse(userAgent);
-  const deviceName = info.product || 'Unknown Device';
-  const modelName = info.model || 'Unknown Model';
-  const deviceFullName = `${deviceName} ${modelName}`;
-  return {
-    device: deviceFullName,
-    operatingSystem: info.os.toString() || 'Unknown OS',
-    browser: info.name || 'Unknown Browser',
-  };
-}
+// function extractDeviceInfo(userAgent) {
+//   const info = platform.parse(userAgent);
+//   const deviceName = info.product || 'Unknown Device';
+//   const modelName = info.model || 'Unknown Model';
+//   const deviceFullName = `${deviceName} ${modelName}`;
+//   return {
+//     device: deviceFullName,
+//     operatingSystem: info.os.toString() || 'Unknown OS',
+//     browser: info.name || 'Unknown Browser',
+//   };
+// }
 
-// Rest of your code
+// // Rest of your code
 
 
-router.get('/login', async (req, res) => {
-  const userAgent = req.headers['user-agent'];
-  const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+// router.get('/login', async (req, res) => {
+//   const userAgent = req.headers['user-agent'];
+//   const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-  const deviceInfo = extractDeviceInfo(userAgent);
+//   const deviceInfo = extractDeviceInfo(userAgent);
   
-  try {
-    const loginDetails = {
-      device: deviceInfo.device,
-      operatingSystem: deviceInfo.operatingSystem,
-      browser: deviceInfo.browser,
-      ip: ipAddress
-    };
+//   try {
+//     const loginDetails = {
+//       device: deviceInfo.device,
+//       operatingSystem: deviceInfo.operatingSystem,
+//       browser: deviceInfo.browser,
+//       ip: ipAddress
+//     };
 
-    // Store the device information in your database
-    // ...
+//     // Store the device information in your database
+//     // ...
 
-    console.log(loginDetails);
+//     console.log(loginDetails);
 
-    res.json({ loginDetails });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+//     res.json({ loginDetails });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
 
@@ -140,6 +140,46 @@ router.get('/login', async (req, res) => {
 // }
 
 
+const device = require('express-device');
+
+// Middleware for device detection
+router.use(device.capture());
+
+// Function to extract device information from request
+function extractDeviceInfo(req) {
+  const deviceType = req.device.type || 'Unknown Device';
+  const deviceName = req.device.name || 'Unknown Device';
+  const deviceFullName = `${deviceType} - ${deviceName}`;
+  return {
+    device: deviceFullName,
+    operatingSystem: req.device.os || 'Unknown OS',
+    browser: req.device.browser || 'Unknown Browser',
+  };
+}
+
+// API endpoint for handling login
+router.post('/login', async (req, res) => {
+  // Extract user agent from request
+  const userAgent = req.headers['user-agent'];
+
+  try {
+    // Capture device information using the middleware
+    req.device = device(req, res, next);
+
+    // Extract device information
+    const deviceInfo = extractDeviceInfo(req);
+
+    // Store the device information in your database
+    // ...
+
+    console.log(deviceInfo);
+
+    // Rest of your code
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 
 
