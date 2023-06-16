@@ -14,34 +14,34 @@ const ipinfo = require('ipinfo');
 const nodemailer = require('nodemailer');
 // const geoLite2CityDb = maxmind.openSync('/path/to/GeoLite2-City.mmdb');
 
-router.get('/login', async (req, res) => {
+// router.get('/login', async (req, res) => {
 
-  const userAgent = req.headers['user-agent'];
-            const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+//   const userAgent = req.headers['user-agent'];
+//             const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
-            const deviceInfo = extractDeviceInfo(userAgent);
-            try {
-            const loginDetails = {
-              device: deviceInfo.device,
-              operatingSystem: deviceInfo.operatingSystem,
-              browser: deviceInfo.browser,
-              ip: ipAddress
-            };
+//             const deviceInfo = extractDeviceInfo(userAgent);
+//             try {
+//             const loginDetails = {
+//               device: deviceInfo.device,
+//               operatingSystem: deviceInfo.operatingSystem,
+//               browser: deviceInfo.browser,
+//               ip: ipAddress
+//             };
 
-            // Store the device information in your database
-            // ...
+//             // Store the device information in your database
+//             // ...
 
-            console.log(loginDetails);
+//             console.log(loginDetails);
 
 
  
 
-    res.json({loginDetails});
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+//     res.json({loginDetails});
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 // function extractDeviceInfo(userAgent) {
 //   const agent = useragent.parse(userAgent);
@@ -67,18 +67,52 @@ const UAParser = require('ua-parser-js');
 // }
 const DeviceDetector = require('device-detector-js');
 
+
+
+
+
+// Function to extract device information from user agent
 function extractDeviceInfo(userAgent) {
   const detector = new DeviceDetector();
-  const device = detector.parse(userAgent).device;
+  const parsedResult = detector.parse(userAgent);
+  const device = parsedResult.device || {};
   const deviceName = device.brand || 'Unknown Brand';
   const modelName = device.model || 'Unknown Model';
   const deviceFullName = `${deviceName} ${modelName}`;
   return {
     device: deviceFullName,
-    operatingSystem: detector.parse(userAgent).os.name || 'Unknown OS',
-    browser: detector.parse(userAgent).client.name || 'Unknown Browser',
+    operatingSystem: parsedResult.os?.name || 'Unknown OS',
+    browser: parsedResult.client?.name || 'Unknown Browser',
   };
 }
+
+router.get('/login', async (req, res) => {
+  const userAgent = req.headers['user-agent'];
+  const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+
+  const deviceInfo = extractDeviceInfo(userAgent);
+  
+  try {
+    const loginDetails = {
+      device: deviceInfo.device,
+      operatingSystem: deviceInfo.operatingSystem,
+      browser: deviceInfo.browser,
+      ip: ipAddress
+    };
+
+    // Store the device information in your database
+    // ...
+
+    console.log(loginDetails);
+
+    res.json({ loginDetails });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+
 
 // function getLocation(ipAddress) {
 //   return new Promise((resolve, reject) => {
