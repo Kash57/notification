@@ -54,7 +54,7 @@ const nodemailer = require('nodemailer');
 // }
 
 // Function to extract device information from user agent
-const UAParser = require('ua-parser-js');
+
 
 // function extractDeviceInfo(userAgent) {
 //   const parser = new UAParser(userAgent);
@@ -190,91 +190,71 @@ const DeviceDetector = require('device-detector-js');
 //     browser: agent.toAgent(),
 //   };
 // }
-async function extractDeviceInfo(userAgent) {
-  try {
-    const agent = useragent.parse(userAgent);
-    const deviceName = agent.device.family || 'Unknown Device';
-    const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
-    const fullDeviceName = deviceModel?.complete_device_name || deviceName;
-    return {
-      device: fullDeviceName,
-      operatingSystem: agent.os.toString(),
-      browser: agent.toAgent(),
-    };
-  } catch (error) {
-    console.error('Error extracting device info:', error);
-    return {
-      device: 'Unknown Device',
-      operatingSystem: 'Unknown OS',
-      browser: 'Unknown Browser',
-    };
-  }
-}
+// async function extractDeviceInfo(userAgent) {
+//   try {
+//     const agent = useragent.parse(userAgent);
+//     const deviceName = agent.device.family || 'Unknown Device';
+//     const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
+//     const fullDeviceName = deviceModel?.complete_device_name || deviceName;
+//     return {
+//       device: fullDeviceName,
+//       operatingSystem: agent.os.toString(),
+//       browser: agent.toAgent(),
+//     };
+//   } catch (error) {
+//     console.error('Error extracting device info:', error);
+//     return {
+//       device: 'Unknown Device',
+//       operatingSystem: 'Unknown OS',
+//       browser: 'Unknown Browser',
+//     };
+//   }
+// }
 
 // API endpoint for handling login
-router.get('/login', async (req, res) => {
-  // Extract user agent from request headers
-  const userAgent = req.headers['user-agent'];
+// router.get('/login', async (req, res) => {
+//   // Extract user agent from request headers
+//   const userAgent = req.headers['user-agent'];
 
-  try {
-    // Extract device information
-    const deviceInfo = extractDeviceInfo(userAgent);
+//   try {
+//     // Extract device information
+//     const deviceInfo = extractDeviceInfo(userAgent);
 
-    // Store the device information in your database
-    // ...
+//     // Store the device information in your database
+//     // ...
 
-    console.log(deviceInfo);
-    res.json({ deviceInfo });
-    // Rest of your code
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Internal Server Error');
-  }
-});
+//     console.log(deviceInfo);
+//     res.json({ deviceInfo });
+//     // Rest of your code
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
+
+
+const UAParser = require('ua-parser-js');
 const dns = require('dns');
 
 // Function to perform reverse DNS lookup
 async function getHostName(ipAddress) {
   return new Promise((resolve, reject) => {
-    dns.reverse(ipAddress, (err, hostnames) => {
-      if (err) {
-        reject(err);
-      } else {
-        const hostname = hostnames.length > 0 ? hostnames[0] : 'Unknown Hostname';
-        resolve(hostname);
-      }
-    });
+    // Exclude loopback address for reverse DNS lookup
+    if (ipAddress === '::1' || ipAddress === '::ffff:127.0.0.1') {
+      resolve('Localhost');
+    } else {
+      dns.reverse(ipAddress, (err, hostnames) => {
+        if (err) {
+          reject(err);
+        } else {
+          const hostname = hostnames.length > 0 ? hostnames[0] : 'Unknown Hostname';
+          resolve(hostname);
+        }
+      });
+    }
   });
-}
-
-// Modified extractDeviceInfo function to include hostname
-async function extractDeviceInfo(userAgent, ipAddress) {
-  try {
-    const agent = useragent.parse(userAgent);
-    const deviceName = agent.device.family || 'Unknown Device';
-    const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
-    const fullDeviceName = deviceModel?.complete_device_name || deviceName;
-
-    // Perform reverse DNS lookup for the provided IP address
-    const hostName = await getHostName(ipAddress);
-
-    return {
-      device: fullDeviceName,
-      operatingSystem: agent.os.toString(),
-      browser: agent.toAgent(),
-      hostName: hostName,
-    };
-  } catch (error) {
-    console.error('Error extracting device info:', error);
-    return {
-      device: 'Unknown Device',
-      operatingSystem: 'Unknown OS',
-      browser: 'Unknown Browser',
-      hostName: 'Unknown Hostname',
-    };
-  }
 }
 
 // API endpoint for handling login
@@ -283,11 +263,26 @@ router.get('/login', async (req, res) => {
   const userAgent = req.headers['user-agent'];
 
   // Extract IP address of the user
-  const ipAddress = req.ip;
+  const ipAddress = req.connection.remoteAddress;
 
   try {
-    // Extract device information and hostname
-    const deviceInfo = await extractDeviceInfo(userAgent, ipAddress);
+    // Parse user agent
+    const parser = new UAParser();
+    const uaResult = parser.setUA(userAgent).getResult();
+
+    // Extract device information
+    const deviceName = uaResult.device.model || 'Unknown Device';
+
+    // Perform reverse DNS lookup for the provided IP address
+    const hostName = await getHostName(ipAddress);
+
+    // Construct device info object
+    const deviceInfo = {
+      device: deviceName,
+      operatingSystem: uaResult.os.name,
+      browser: uaResult.browser.name,
+      hostName: hostName,
+    };
 
     // Store the device information in your database
     // ...
