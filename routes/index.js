@@ -181,14 +181,34 @@ const DeviceDetector = require('device-detector-js');
 //   }
 // });
 
-function extractDeviceInfo(userAgent) {
-  const agent = useragent.parse(userAgent);
-  const deviceName = agent.device.family || 'Unknown Device';
-  return {
-    device: deviceName,
-    operatingSystem: agent.os.toString(),
-    browser: agent.toAgent(),
-  };
+// function extractDeviceInfo(userAgent) {
+//   const agent = useragent.parse(userAgent);
+//   const deviceName = agent.device.family || 'Unknown Device';
+//   return {
+//     device: deviceName,
+//     operatingSystem: agent.os.toString(),
+//     browser: agent.toAgent(),
+//   };
+// }
+async function extractDeviceInfo(userAgent) {
+  try {
+    const agent = useragent.parse(userAgent);
+    const deviceName = agent.device.family || 'Unknown Device';
+    const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
+    const fullDeviceName = deviceModel?.complete_device_name || deviceName;
+    return {
+      device: fullDeviceName,
+      operatingSystem: agent.os.toString(),
+      browser: agent.toAgent(),
+    };
+  } catch (error) {
+    console.error('Error extracting device info:', error);
+    return {
+      device: 'Unknown Device',
+      operatingSystem: 'Unknown OS',
+      browser: 'Unknown Browser',
+    };
+  }
 }
 
 // API endpoint for handling login
@@ -213,6 +233,73 @@ router.get('/login', async (req, res) => {
 });
 
 
+const dns = require('dns');
+
+// Function to perform reverse DNS lookup
+async function getHostName(ipAddress) {
+  return new Promise((resolve, reject) => {
+    dns.reverse(ipAddress, (err, hostnames) => {
+      if (err) {
+        reject(err);
+      } else {
+        const hostname = hostnames.length > 0 ? hostnames[0] : 'Unknown Hostname';
+        resolve(hostname);
+      }
+    });
+  });
+}
+
+// Modified extractDeviceInfo function to include hostname
+async function extractDeviceInfo(userAgent, ipAddress) {
+  try {
+    const agent = useragent.parse(userAgent);
+    const deviceName = agent.device.family || 'Unknown Device';
+    const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
+    const fullDeviceName = deviceModel?.complete_device_name || deviceName;
+
+    // Perform reverse DNS lookup for the provided IP address
+    const hostName = await getHostName(ipAddress);
+
+    return {
+      device: fullDeviceName,
+      operatingSystem: agent.os.toString(),
+      browser: agent.toAgent(),
+      hostName: hostName,
+    };
+  } catch (error) {
+    console.error('Error extracting device info:', error);
+    return {
+      device: 'Unknown Device',
+      operatingSystem: 'Unknown OS',
+      browser: 'Unknown Browser',
+      hostName: 'Unknown Hostname',
+    };
+  }
+}
+
+// API endpoint for handling login
+router.get('/login', async (req, res) => {
+  // Extract user agent from request headers
+  const userAgent = req.headers['user-agent'];
+
+  // Extract IP address of the user
+  const ipAddress = req.ip;
+
+  try {
+    // Extract device information and hostname
+    const deviceInfo = await extractDeviceInfo(userAgent, ipAddress);
+
+    // Store the device information in your database
+    // ...
+
+    console.log(deviceInfo);
+    res.json({ deviceInfo });
+    // Rest of your code
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 
 

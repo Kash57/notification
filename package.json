@@ -9,6 +9,7 @@
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "device-detector-js": "^3.0.3",
+    "dns": "^0.2.2",
     "express": "~4.16.1",
     "express-device": "^0.4.2",
     "geoip-lite": "^1.4.7",
