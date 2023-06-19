@@ -391,7 +391,7 @@ router.get('/login', (req, res) => {
   // ...
 
   console.log('User Info:', userInfo);
-  res.json({ message: 'User info received successfully' });
+  res.json({  userInfo });
 });
 
 
