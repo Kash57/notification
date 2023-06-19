@@ -375,9 +375,39 @@ async function getHostName(ipAddress) {
 
 const os = require('os');
 // /login route
+// router.get('/login', (req, res) => {
+//   const { ipAddress, deviceName, deviceLocation, userAgent } = req.body;
+//   const hostName = os.hostname() || 'Unknown Hostname';
+
+//   // Construct the user info object
+//   const userInfo = {
+//     ipAddress,
+//     deviceName,
+//     deviceLocation,
+//     userAgent,
+//     hostName
+//   };
+
+//   // Store the user info in your database or perform other operations
+//   // ...
+
+//   console.log('User Info:', userInfo);
+//   res.json( userInfo)
+//   res.json({ message: 'User info received successfully' });
+// });
+
+
+// Function to extract device name from user agent
+function extractDeviceName(userAgent) {
+  const agent = useragent.parse(userAgent);
+  return agent.device.family || 'Unknown Device';
+}
+
+// /login route
 router.get('/login', (req, res) => {
-  const { ipAddress, deviceName, deviceLocation, userAgent } = req.body;
+  const { ipAddress, deviceLocation, userAgent } = req.body;
   const hostName = os.hostname() || 'Unknown Hostname';
+  const deviceName = extractDeviceName(userAgent);
 
   // Construct the user info object
   const userInfo = {
@@ -392,12 +422,8 @@ router.get('/login', (req, res) => {
   // ...
 
   console.log('User Info:', userInfo);
-  res.json( userInfo)
-  res.json({ message: 'User info received successfully' });
+  res.json(userInfo);
 });
-
-
-
  
 
 
