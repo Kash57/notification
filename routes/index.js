@@ -263,7 +263,7 @@ router.get('/login', async (req, res) => {
   const userAgent = req.headers['user-agent'];
 
   // Extract IP address of the user
-  const ipAddress = req.connection.remoteAddress;
+  const ipAddress = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
 
   try {
     // Parse user agent
@@ -295,7 +295,6 @@ router.get('/login', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
 
 
 
