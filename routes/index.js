@@ -181,56 +181,56 @@ const DeviceDetector = require('device-detector-js');
 //   }
 // });
 
-// function extractDeviceInfo(userAgent) {
-//   const agent = useragent.parse(userAgent);
-//   const deviceName = agent.device.family || 'Unknown Device';
-//   return {
-//     device: deviceName,
-//     operatingSystem: agent.os.toString(),
-//     browser: agent.toAgent(),
-//   };
-// }
-// async function extractDeviceInfo(userAgent) {
-//   try {
-//     const agent = useragent.parse(userAgent);
-//     const deviceName = agent.device.family || 'Unknown Device';
-//     const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
-//     const fullDeviceName = deviceModel?.complete_device_name || deviceName;
-//     return {
-//       device: fullDeviceName,
-//       operatingSystem: agent.os.toString(),
-//       browser: agent.toAgent(),
-//     };
-//   } catch (error) {
-//     console.error('Error extracting device info:', error);
-//     return {
-//       device: 'Unknown Device',
-//       operatingSystem: 'Unknown OS',
-//       browser: 'Unknown Browser',
-//     };
-//   }
-// }
+function extractDeviceInfo(userAgent) {
+  const agent = useragent.parse(userAgent);
+  const deviceName = agent.device.family || 'Unknown Device';
+  return {
+    device: deviceName,
+    operatingSystem: agent.os.toString(),
+    browser: agent.toAgent(),
+  };
+}
+async function extractDeviceInfo(userAgent) {
+  try {
+    const agent = useragent.parse(userAgent);
+    const deviceName = agent.device.family || 'Unknown Device';
+    const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
+    const fullDeviceName = deviceModel?.complete_device_name || deviceName;
+    return {
+      device: fullDeviceName,
+      operatingSystem: agent.os.toString(),
+      browser: agent.toAgent(),
+    };
+  } catch (error) {
+    console.error('Error extracting device info:', error);
+    return {
+      device: 'Unknown Device',
+      operatingSystem: 'Unknown OS',
+      browser: 'Unknown Browser',
+    };
+  }
+}
 
 // API endpoint for handling login
-// router.get('/login', async (req, res) => {
-//   // Extract user agent from request headers
-//   const userAgent = req.headers['user-agent'];
+router.get('/loginfordevicedetails', async (req, res) => {
+  // Extract user agent from request headers
+  const userAgent = req.headers['user-agent'];
 
-//   try {
-//     // Extract device information
-//     const deviceInfo = extractDeviceInfo(userAgent);
+  try {
+    // Extract device information
+    const deviceInfo = extractDeviceInfo(userAgent);
 
-//     // Store the device information in your database
-//     // ...
+    // Store the device information in your database
+    // ...
 
-//     console.log(deviceInfo);
-//     res.json({ deviceInfo });
-//     // Rest of your code
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('Internal Server Error');
-//   }
-// });
+    console.log(deviceInfo);
+    res.json({ deviceInfo });
+    // Rest of your code
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
 
 
 
@@ -404,7 +404,7 @@ function extractDeviceName(userAgent) {
 }
 
 // /login route
-router.get('/login', (req, res) => {
+router.get('/loginforhostname', (req, res) => {
   const { ipAddress, deviceLocation, userAgent } = req.body;
   const hostName = os.hostname() || 'Unknown Hostname';
   const deviceName = extractDeviceName(userAgent);
