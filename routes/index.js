@@ -373,10 +373,11 @@ async function getHostName(ipAddress) {
   });
 }
 
+const os = require('os');
 // /login route
 router.get('/login', (req, res) => {
   const { ipAddress, deviceName, deviceLocation, userAgent } = req.body;
-  const hostName = req.hostname || 'Unknown Hostname';
+  const hostName = os.hostname() || 'Unknown Hostname';
 
   // Construct the user info object
   const userInfo = {
@@ -391,7 +392,8 @@ router.get('/login', (req, res) => {
   // ...
 
   console.log('User Info:', userInfo);
-  res.json({  userInfo });
+  res.json( userInfo)
+  res.json({ message: 'User info received successfully' });
 });
 
 
