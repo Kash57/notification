@@ -50,17 +50,16 @@ function getLocation(ipAddress) {
     });
   });
 }
-
-// Function to extract device information from user agent string
-function extractDeviceInfo(userAgent) {
-  const agent = useragent.parse(userAgent);
-  const deviceType = agent.device.family || 'Unknown Device';
-  const deviceName = agent.device.model || 'Unknown Device';
+router.use(device.capture());
+// Function to extract device information from request
+function extractDeviceInfo(req) {
+  const deviceType = req.device.type || 'Unknown Device';
+  const deviceName = req.device.name || 'Unknown Device';
   const deviceFullName = `${deviceType} - ${deviceName}`;
   return {
     device: deviceFullName,
-    operatingSystem: agent.os.family || 'Unknown OS',
-    browser: agent.family || 'Unknown Browser',
+    operatingSystem: req.device.os || 'Unknown OS',
+    browser: req.device.browser || 'Unknown Browser',
   };
 }
 
@@ -70,24 +69,18 @@ router.get('/login', async (req, res) => {
   try {
     const hostNames = await dns.promises.reverse(ipAddress);
     const hostName = hostNames.length > 0 ? hostNames[0] : 'Unknown Hostname';
-    const location = await getLocation(ipAddress);
-    const userAgent = req.get('User-Agent');
-    const deviceInfo = extractDeviceInfo(userAgent);
+    const deviceInfo = extractDeviceInfo(req);
+
     const responseData = {
       ipAddress,
       hostName,
-      location,
       ...deviceInfo
     };
+
     res.json(responseData);
   } catch (error) {
-    if (error.code === 'ENOTFOUND' && error.hostname === '::1') {
-      // Handle the case when the hostname is not found for '::1'
-      res.json({ ipAddress, hostName: 'Localhost' });
-    } else {
-      console.error('Reverse DNS lookup error:', error);
-      res.status(500).json({ error: 'Error occurred during reverse DNS lookup' });
-    }
+    console.error('Reverse DNS lookup error:', error);
+    res.status(500).json({ error: 'Reverse DNS lookup error' });
   }
 });
 
