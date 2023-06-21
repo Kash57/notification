@@ -142,9 +142,7 @@ router.get('/login', async (req, res) => {
     // Generate token
     // ...
 
-    res.status(200).json({
-      message: 'Login success'
-    });
+    res.status(200).json({loginDetails});
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Internal Server Error' });
