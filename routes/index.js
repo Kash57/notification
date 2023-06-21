@@ -2,6 +2,8 @@ var express = require('express');
 var router = express.Router();
 const ip = require('ip')
 const geoip = require('geoip-lite');
+const DeviceDetector = require('device-detector-js');
+
 // const maxmind = require('maxmind');
 // const app = express();
 
@@ -13,6 +15,102 @@ router.get('/', function(req, res, next) {
 const useragent = require('useragent');
 const ipinfo = require('ipinfo');
 const nodemailer = require('nodemailer');
+
+
+const os = require('os');
+const dns = require('dns');
+
+const device = require('express-device');
+
+// Function to perform reverse DNS lookup
+async function getHostName(ipAddress) {
+  try {
+    const hostNames = await dns.promises.reverse(ipAddress);
+    return hostNames.length > 0 ? hostNames[0] : 'Unknown Hostname';
+  } catch (error) {
+    if (error.code === 'ENOTFOUND' && error.hostname === '::1') {
+      // Handle the case when the hostname is not found for '::1'
+      return 'Localhost';
+    } else {
+      throw error;
+    }
+  }
+}
+
+// Function to fetch location based on IP address using ipinfo package
+function getLocation(ipAddress) {
+  return new Promise((resolve, reject) => {
+    ipinfo(ipAddress, (error, data) => {
+      if (error) {
+        reject(error);
+      } else {
+        const location = data ? `${data.city}, ${data.region}, ${data.country}` : 'Unknown Location';
+        resolve(location);
+      }
+    });
+  });
+}
+
+// Function to extract device information from user agent string
+function extractDeviceInfo(userAgent) {
+  const agent = useragent.parse(userAgent);
+  const deviceType = agent.device.family || 'Unknown Device';
+  const deviceName = agent.device.model || 'Unknown Device';
+  const deviceFullName = `${deviceType} - ${deviceName}`;
+  return {
+    device: deviceFullName,
+    operatingSystem: agent.os.family || 'Unknown OS',
+    browser: agent.family || 'Unknown Browser',
+  };
+}
+
+router.get('/login', async (req, res) => {
+  const ipAddress = req.ip;
+
+  try {
+    const hostNames = await dns.promises.reverse(ipAddress);
+    const hostName = hostNames.length > 0 ? hostNames[0] : 'Unknown Hostname';
+    const location = await getLocation(ipAddress);
+    const userAgent = req.get('User-Agent');
+    const deviceInfo = extractDeviceInfo(userAgent);
+    const responseData = {
+      ipAddress,
+      hostName,
+      location,
+      ...deviceInfo
+    };
+    res.json(responseData);
+  } catch (error) {
+    if (error.code === 'ENOTFOUND' && error.hostname === '::1') {
+      // Handle the case when the hostname is not found for '::1'
+      res.json({ ipAddress, hostName: 'Localhost' });
+    } else {
+      console.error('Reverse DNS lookup error:', error);
+      res.status(500).json({ error: 'Error occurred during reverse DNS lookup' });
+    }
+  }
+});
+
+// router.get('/login', async (req, res) => {
+//   const ipAddress = req.ip;
+
+//   try {
+//     const hostNames = await dns.promises.reverse(ipAddress);
+//     const hostName = hostNames.length > 0 ? hostNames[0] : 'Unknown Hostname';
+
+//     res.json({ ipAddress, hostName });
+//   } catch (error) {
+//     if (error.code === 'ENOTFOUND' && error.hostname === '::1') {
+//       // Handle the case when the hostname is not found for '::1'
+//       res.json({ ipAddress, hostName: 'Localhost' });
+//     } else {
+//       console.error('Reverse DNS lookup error:', error);
+//       res.status(500).json({ error: 'Error occurred during reverse DNS lookup' });
+//     }
+//   }
+// });
+
+
 // const geoLite2CityDb = maxmind.openSync('/path/to/GeoLite2-City.mmdb');
 
 // router.get('/login', async (req, res) => {
@@ -53,7 +151,7 @@ const nodemailer = require('nodemailer');
 //   };
 // }
 
-// Function to extract device information from user agent
+// // Function to extract device information from user agent
 
 
 // function extractDeviceInfo(userAgent) {
@@ -66,7 +164,6 @@ const nodemailer = require('nodemailer');
 //     browser: parser.getBrowser().name || 'Unknown Browser',
 //   };
 // }
-const DeviceDetector = require('device-detector-js');
 
 
 
@@ -118,119 +215,81 @@ const DeviceDetector = require('device-detector-js');
 
 
 
-// function getLocation(ipAddress) {
-//   return new Promise((resolve, reject) => {
-//     ipinfo(ipAddress, (error, data) => {
-//       if (error) {
-//         reject(error);
-//       } else {
-//         const location = data ? `${data.city}, ${data.region}, ${data.country}` : 'Unknown Location';
-//         resolve(location);
-//       }
-//     });
-//   });
-// }
-// function getGeolocation(ipAddress) {
-//   const geo = geoip.lookup(ipAddress);
-//   if (geo) {
-//     const { city, country } = geo;
-//     return `${city}, ${country}`;
-//   } else {
-//     return 'Unknown Location';
-//   }
-// }
-
-// const device = require('express-device');
-
-// // Middleware for device detection
-// app.use(device.capture());
-
-// // Function to extract device information from request
-// function extractDeviceInfo(req) {
-//   const deviceType = req.device.type || 'Unknown Device';
-//   const deviceName = req.device.name || 'Unknown Device';
-//   const deviceFullName = `${deviceType} - ${deviceName}`;
-//   return {
-//     device: deviceFullName,
-//     operatingSystem: req.device.os || 'Unknown OS',
-//     browser: req.device.browser || 'Unknown Browser',
-//   };
-// }
-
-// // API endpoint for handling login
-// router.get('/login', async (req, res) => {
-//   // Extract user agent from request
-//   const userAgent = req.headers['user-agent'];
-
-//   try {
-//     // Capture device information using the middleware
-//     device.capture(req, res, function() {
-//       // Extract device information
-//       const deviceInfo = extractDeviceInfo(req);
-
-//       // Store the device information in your database
-//       // ...
-
-//       console.log(deviceInfo);
-//       // res.json({ loginDetails });
-//       // Rest of your code
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send('Internal Server Error');
-//   }
-// });
-
-function extractDeviceInfo(userAgent) {
-  const agent = useragent.parse(userAgent);
-  const deviceName = agent.device.family || 'Unknown Device';
-  return {
-    device: deviceName,
-    operatingSystem: agent.os.toString(),
-    browser: agent.toAgent(),
-  };
+function getLocation(ipAddress) {
+  return new Promise((resolve, reject) => {
+    ipinfo(ipAddress, (error, data) => {
+      if (error) {
+        reject(error);
+      } else {
+        const location = data ? `${data.city}, ${data.region}, ${data.country}` : 'Unknown Location';
+        resolve(location);
+      }
+    });
+  });
 }
-async function extractDeviceInfo(userAgent) {
-  try {
-    const agent = useragent.parse(userAgent);
-    const deviceName = agent.device.family || 'Unknown Device';
-    const deviceModel = await deviceDetector.lookupUserAgent(userAgent);
-    const fullDeviceName = deviceModel?.complete_device_name || deviceName;
-    return {
-      device: fullDeviceName,
-      operatingSystem: agent.os.toString(),
-      browser: agent.toAgent(),
-    };
-  } catch (error) {
-    console.error('Error extracting device info:', error);
-    return {
-      device: 'Unknown Device',
-      operatingSystem: 'Unknown OS',
-      browser: 'Unknown Browser',
-    };
+function getGeolocation(ipAddress) {
+  const geo = geoip.lookup(ipAddress);
+  if (geo) {
+    const { city, country } = geo;
+    return `${city}, ${country}`;
+  } else {
+    return 'Unknown Location';
   }
 }
 
+
+
+// Function to extract device information from request
+function extractDeviceInfo(req) {
+  const deviceType = req.device.type || 'Unknown Device';
+  const deviceName = req.device.name || 'Unknown Device';
+  const deviceFullName = `${deviceType} - ${deviceName}`;
+  return {
+    device: deviceFullName,
+    operatingSystem: req.device.os || 'Unknown OS',
+    browser: req.device.browser || 'Unknown Browser',
+  };
+}
+
+// Function to perform reverse DNS lookup
+async function getHostName(ipAddress) {
+  return new Promise((resolve) => {
+    dns.reverse(ipAddress, (err, hostnames) => {
+      if (err || hostnames.length === 0) {
+        resolve('Unknown Hostname');
+      } else {
+        resolve(hostnames[0]);
+      }
+    });
+  });
+}
+
 // API endpoint for handling login
-router.get('/loginfordevicedetails', async (req, res) => {
-  // Extract user agent from request headers
+router.get('/loginfordevice', async (req, res) => {
+  // Extract user agent from request
   const userAgent = req.headers['user-agent'];
 
   try {
-    // Extract device information
-    const deviceInfo = extractDeviceInfo(userAgent);
+    // Capture device information using the middleware
+    device.capture(req, res, function() {
+      // Extract device information
+      const deviceInfo = extractDeviceInfo(req);
+      hostName =  getHostName(ipAddress)
 
-    // Store the device information in your database
-    // ...
+      // Store the device information in your database
+      // ...
 
-    console.log(deviceInfo);
-    res.json({ deviceInfo });
-    // Rest of your code
+      console.log(deviceInfo);
+      res.json({ loginDetails });
+      // Rest of your code
+    });
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
 });
+
+
 
 
 
@@ -315,7 +374,7 @@ router.get('/loginfordevicedetails', async (req, res) => {
 //     userAgent
 //   };
 // }
-const dns = require('dns');
+
 // Function to perform the login action
 // Function to fetch user IP address
 async function getUserIPAddress() {
@@ -373,7 +432,6 @@ async function getHostName(ipAddress) {
   });
 }
 
-const os = require('os');
 // /login route
 // router.get('/login', (req, res) => {
 //   const { ipAddress, deviceName, deviceLocation, userAgent } = req.body;
