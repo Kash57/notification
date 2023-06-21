@@ -51,15 +51,22 @@ function getLocation(ipAddress) {
   });
 }
 router.use(device.capture());
-// Function to extract device information from request
+
+
+
+
+// Create a new instance of DeviceDetector
+const deviceDetector = new DeviceDetector();
+
+// Function to extract device information from request using device-detector-js
 function extractDeviceInfo(req) {
-  const deviceType = req.device.type || 'Unknown Device';
-  const deviceName = req.device.name || 'Unknown Device';
-  const deviceFullName = `${deviceType} - ${deviceName}`;
+  const userAgent = req.get('User-Agent');
+  const result = deviceDetector.parse(userAgent);
+
   return {
-    device: deviceFullName,
-    operatingSystem: req.device.os || 'Unknown OS',
-    browser: req.device.browser || 'Unknown Browser',
+    device: result.device?.model || 'Unknown Device',
+    operatingSystem: result.os?.name || 'Unknown OS',
+    browser: result.client?.name || 'Unknown Browser',
   };
 }
 
