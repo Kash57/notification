@@ -12,6 +12,7 @@
     "dns": "^0.2.2",
     "express": "~4.16.1",
     "express-device": "^0.4.2",
+    "express-useragent": "^1.0.15",
     "geoip-lite": "^1.4.7",
     "http-errors": "~1.6.3",
     "ip": "^1.1.8",
